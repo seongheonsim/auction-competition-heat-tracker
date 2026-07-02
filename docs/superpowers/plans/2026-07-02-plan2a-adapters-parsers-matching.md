@@ -19,6 +19,15 @@
 
 ---
 
+## 실행 노트 (2026-07-02, recon 결과 반영)
+
+- **courtauction.go.kr = WebSquare(JS 프레임워크)** — 정적 GET/POST로 물건 데이터 취득 불가. Task 5 PART B는 stub + `@pytest.mark.xfail(strict=True)` + `tests/fixtures/courtauction/NOTES.md`(대안 기록)로 두고, **헤드리스 브라우저(Playwright) 기반 별도 플랜으로 연기**한다.
+- 사용자 결정: **정적 사이트 먼저, JS는 나중.** 홈페이지 프로브상 tank·dooin은 서버렌더링(정적 유망), ggi·onbid은 응답이 작아 JS/리다이렉트 의심.
+- **파서 태스크 실행 순서 조정:** Task 8(tank) → Task 9(dooin) → Task 7(ggi) → Task 6(onbid). 각 recon에서 로그인 없이 조회수(또는 facts)가 정적 HTML로 보이면 구현, JS라 불가하면 courtauction과 동일하게 stub+xfail+NOTES로 연기한다.
+- **Task 10(어댑터)** 는 실제로 파서가 구현된 소스에 대해서만 어댑터를 완성하고, 연기된 소스는 어댑터도 함께 연기한다.
+
+---
+
 ## File Structure
 
 - `src/auction_tracker/sources/__init__.py` — 패키지 마커
