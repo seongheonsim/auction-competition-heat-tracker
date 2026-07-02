@@ -218,18 +218,18 @@ git commit -m "feat: add case number normalization util"
 
 ---
 
-### Task 3: DB 세션 팩토리 & 테스트 픽스처
+### Task 3: DB 세션 팩토리
 
 **Files:**
-- Create: `src/auction_tracker/db.py`, `tests/conftest.py`
-- Test: (conftest는 Task 4에서 사용; 여기선 스모크 테스트로 검증)
+- Create: `src/auction_tracker/db.py`, `tests/test_db_smoke.py`
+
+> 주의(순서): `tests/conftest.py`(SQLite `session` 픽스처)는 `auction_tracker.models.Base`를 import하므로 **Task 4에서** 모델과 함께 생성한다. Task 3에서 conftest를 만들면 pytest가 어떤 테스트를 수집하든 conftest를 로드하다 ImportError로 실패한다.
 
 **Interfaces:**
 - Consumes: `auction_tracker.config.get_settings`
 - Produces:
   - `auction_tracker.db.make_engine(url: str) -> Engine`
   - `auction_tracker.db.make_session_factory(engine) -> sessionmaker[Session]`
-  - `tests/conftest.py` 픽스처 `session` (인메모리 SQLite, 각 테스트마다 새 스키마)
 
 - [ ] **Step 1: `db.py` 구현 (엔진/세션 팩토리)**
 
@@ -247,7 +247,45 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False, future=True)
 ```
 
-- [ ] **Step 2: conftest 픽스처 작성**
+- [ ] **Step 2: db 스모크 테스트 작성 및 실행**
+
+`tests/test_db_smoke.py`:
+```python
+from sqlalchemy import text
+
+from auction_tracker.db import make_engine, make_session_factory
+
+
+def test_engine_executes_scalar():
+    engine = make_engine("sqlite://")
+    factory = make_session_factory(engine)
+    with factory() as s:
+        assert s.execute(text("select 1")).scalar_one() == 1
+```
+
+Run: `uv run pytest tests/test_db_smoke.py -v`
+Expected: PASS (1 passed)
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add src/auction_tracker/db.py tests/test_db_smoke.py
+git commit -m "feat: add db engine/session factory"
+```
+
+---
+
+### Task 4: ORM 모델 (6개 테이블)
+
+**Files:**
+- Create: `src/auction_tracker/models.py`, `tests/conftest.py`
+- Test: `tests/test_models.py`
+
+**Interfaces:**
+- Consumes: (없음)
+- Produces: `auction_tracker.models.Base` 및 모델 클래스 `WatchlistItem`, `SourceLink`, `DailySnapshot`, `AuctionResult`, `ComparableCase`, `CompLink`. 필드는 스펙 섹션 5와 일치. `tests/conftest.py`의 `session` 픽스처(인메모리 SQLite, 각 테스트마다 새 스키마)도 이 태스크에서 생성 — 이후 모든 DB 테스트가 사용.
+
+- [ ] **Step 1a: conftest 픽스처 작성**
 
 `tests/conftest.py`:
 ```python
@@ -268,47 +306,7 @@ def session() -> Session:
     Base.metadata.drop_all(engine)
 ```
 
-> 주의: 이 픽스처는 `auction_tracker.models.Base`를 import하므로 Task 4 완료 후에 통과한다. 지금은 `db.py`만 스모크 테스트한다.
-
-- [ ] **Step 3: db 스모크 테스트 작성 및 실행**
-
-임시로 `tests/test_db_smoke.py`:
-```python
-from sqlalchemy import text
-
-from auction_tracker.db import make_engine, make_session_factory
-
-
-def test_engine_executes_scalar():
-    engine = make_engine("sqlite://")
-    factory = make_session_factory(engine)
-    with factory() as s:
-        assert s.execute(text("select 1")).scalar_one() == 1
-```
-
-Run: `uv run pytest tests/test_db_smoke.py -v`
-Expected: PASS (1 passed)
-
-- [ ] **Step 4: 커밋**
-
-```bash
-git add src/auction_tracker/db.py tests/conftest.py tests/test_db_smoke.py
-git commit -m "feat: add db engine/session factory and sqlite test fixture"
-```
-
----
-
-### Task 4: ORM 모델 (6개 테이블)
-
-**Files:**
-- Create: `src/auction_tracker/models.py`
-- Test: `tests/test_models.py`
-
-**Interfaces:**
-- Consumes: (없음)
-- Produces: `auction_tracker.models.Base` 및 모델 클래스 `WatchlistItem`, `SourceLink`, `DailySnapshot`, `AuctionResult`, `ComparableCase`, `CompLink`. 필드는 스펙 섹션 5와 일치.
-
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [ ] **Step 1b: 실패하는 테스트 작성**
 
 `tests/test_models.py`:
 ```python
@@ -525,8 +523,8 @@ Expected: PASS (4 passed)
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add src/auction_tracker/models.py tests/test_models.py
-git commit -m "feat: add ORM models for all six tables"
+git add src/auction_tracker/models.py tests/conftest.py tests/test_models.py
+git commit -m "feat: add ORM models for all six tables and sqlite session fixture"
 ```
 
 ---
