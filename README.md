@@ -12,5 +12,19 @@
 
 ## 구현 진행
 - [x] Plan 1: 기반 & 데이터 계층
-- [ ] Plan 2: 수집 파이프라인 (어댑터·크롤러·집계)
+- [~] Plan 2a: 소스 어댑터·파서·매칭 (프레임워크 완료 / onbid·tank 구현 / courtauction·ggi·dooin 연기)
+- [ ] Plan 2b: 크롤러 오케스트레이션 & 스케줄
+- [ ] Plan 2c: 집계/점수 엔진 & 텔레그램 알림
 - [ ] Plan 3: 웹 & 인증
+
+## 소스 상태 (Plan 2a recon 결과)
+
+| 소스 | 유형 | 상태 | 비고 |
+|---|---|---|---|
+| onbid (공매) | facts | ✅ 구현 | robots 없음(허용). JSON API. 프로덕션 fetch는 세션쿠키+CSRF 2단계 필요(Plan 2b). |
+| tank (탱크옥션) | views | ⚠️ 파서만 구현 | 목록은 AJAX JSON. robots가 `/api` Disallow → 프로덕션 fetch는 헤드리스 브라우저 등 준수 경로 필요(Plan 2b). |
+| courtauction (법원경매) | facts | ⛔ 연기 | WebSquare JS 프레임워크. 정적 fetch 불가 → 헤드리스 브라우저 필요. stub+xfail. |
+| ggi (지지옥션) | views | ⛔ 연기 | robots `Disallow: /` (사이트 전체 차단). stub+xfail. |
+| dooin (두인) | views | ⛔ 연기 | JS 렌더링 + robots `Disallow: /ca/`. stub+xfail. |
+
+> 참고: 조회수(views) 소스 3곳(ggi·dooin) 및 courtauction은 robots.txt/JS 제약으로 프로덕션 정적 수집이 막혀 있다. 프로덕션 수집 전략(헤드리스 브라우저 채택 여부, robots/약관 준수, 공식 데이터 접근 협의)은 Plan 2b에서 결정해야 한다. 상세 recon 기록은 각 `tests/fixtures/<source>/NOTES.md` 참조.
